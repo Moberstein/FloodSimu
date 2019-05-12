@@ -1,5 +1,8 @@
 #%% imports
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as cl
+import time
 
 #%% Sample river data
 river_points = pd.DataFrame()
@@ -32,8 +35,8 @@ def step(current_data_points, data_points, height):
     for current_data_point in current_data_points.itertuples():
 
         neighbours = findNeighbours(current_data_point, data_points)
-        neighbours = neighbours[neighbours[2] <= height]
-        neighbours_flooded = len(neighbours) == len(neighbours)
+        flooded_neighbours = neighbours[neighbours[2] <= height]
+        neighbours_flooded = len(neighbours) == len(flooded_neighbours)
 
         print("-> Neighours for %s:" % str(current_data_point))
         if(neighbours_flooded):
@@ -49,7 +52,7 @@ def step(current_data_points, data_points, height):
 
         for leveled_data_point in neighbours.itertuples():
             #print(leveled_data_point)
-            next_data_points = next_data_points.append([[leveled_data_point[1], leveled_data_point[2], leveled_data_point[3]]])
+            next_data_points = next_data_points.append([[leveled_data_point[1], leveled_data_point[2], leveled_data_point[3], leveled_data_point[3] <= height]])
 
         #print("--> %d Neighbours" % len(neighbours))
         #print("    %s" % neighbours)
@@ -63,15 +66,30 @@ def step(current_data_points, data_points, height):
     return (next_data_points, data_points)
 
 #%%
+def scatterplot(data_points):
+    for d in data_points.itertuples():
+        plt.scatter(d[1], d[2], c=d[3], norm=cl.Normalize(min_height, max_height))
+    plt.show()
+
+#%%
 current_data_points = river_points
 available_data_points = data_points
+color_data_points = river_points
 
-for i in range(min_height + 1, max_height + 1):
+for i in range(min_height, max_height + 1):
+    scatterplot(color_data_points)
+
     #print(available_data_points)
     print('#############')
     print('Iteration %d' % i)
     current_data_points, available_data_points = step(current_data_points, available_data_points, i)
 
+    if len(current_data_points) > 0:
+        color_data_points = color_data_points.append([current_data_points[current_data_points[3] == True]])
+        color_data_points = color_data_points.drop_duplicates()
+        print(current_data_points)
+
+scatterplot(color_data_points)
 
 #%%
 #step(current_data_points, data_points, 1)
